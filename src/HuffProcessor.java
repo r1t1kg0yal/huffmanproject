@@ -140,7 +140,9 @@ public class HuffProcessor {
 				    current = root;
 				    }
 			}
-		}	
+		}
+		
+		out.close();
 	}
 	
 	private HuffNode readHeader(BitInputStream in){
