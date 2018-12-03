@@ -1,4 +1,4 @@
-//Ritik Goyal
+// Ritik Goyal
 /**
  * Although this class has a history of several years,
  * it is starting from a blank-slate, new and clean implementation
