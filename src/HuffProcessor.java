@@ -45,80 +45,13 @@ public class HuffProcessor {
 	 *            Buffered bit stream writing to the output file.
 	 */
 	public void compress(BitInputStream in, BitOutputStream out){
-		int[] counts = readForCount(in);
-		HuffNode root = makeTreeFromCounts(counts);
-		String[] codings = makeCodingsFromTree(root);
-		
-		out.writeBits(BITS_PER_INT, HUFF_TREE);
-		writeHeader(root, out);
-		
-		in.reset();
-		writeCompressedBits(codings, in, out);
-		out.close();
-	}
-	private int[] readForCount(BitInputStream x) {
-		int[] rayray = new int[ALPH_SIZE + 1];
-		while (true) {
-			int val = x.readBits(BITS_PER_WORD);
+
+		while (true){
+			int val = in.readBits(BITS_PER_WORD);
 			if (val == -1) break;
-			rayray[val] += 1;
+			out.writeBits(BITS_PER_WORD, val);
 		}
-		rayray[PSEUDO_EOF] = 1;
-		return rayray;
-	}
-	private HuffNode makeTreeFromCounts(int[] array) {
-		PriorityQueue<HuffNode> pq = new PriorityQueue<>();
-		for (int i = 0; i < array.length; i++) {
-			if (array[i] != 0) {
-				pq.add(new HuffNode(i, array[i], null, null));
-			}
-		}
-		while (pq.size() > 1) {
-			HuffNode left = pq.remove();
-			HuffNode right = pq.remove();
-			HuffNode t = new HuffNode(-1, left.myWeight+right.myWeight, left, right);
-			pq.add(t);
-		}
-		HuffNode root = pq.remove();
-		return root;
-	}
-	private String[]makeCodingsFromTree(HuffNode riit){
-		String[] encoding = new String[ALPH_SIZE + 1];
-		codingHelper(riit, "", encoding);
-		return encoding;
-	}
-	private void codingHelper(HuffNode rit, String s, String[] ray) {
-		if (rit == null) {
-			throw new HuffException("root is null");
-		}
-		if (rit.myLeft == null && rit.myRight == null) {
-			ray[rit.myValue] = s;
-			return;
-		}
-		codingHelper(rit.myLeft,s+"0", ray);
-		codingHelper(rit.myRight,s+"1", ray);
-	}
-	private void writeHeader(HuffNode reet, BitOutputStream y) {
-		if (reet.myLeft != null && reet.myRight != null) {
-			y.writeBits(1, 0);
-			writeHeader(reet.myLeft, y);
-			writeHeader(reet.myRight, y);
-		}
-		else {
-			y.writeBits(1, 1);
-			y.writeBits(BITS_PER_WORD + 1, reet.myValue);
-		}
-	}
-	private void writeCompressedBits(String[] arriy, BitInputStream z, BitOutputStream j) {
-		while (true) {
-			int val = z.readBits(BITS_PER_WORD);
-			if (z.readBits(BITS_PER_WORD) == -1) break;
-			String code = arriy[val];
-			j.writeBits(code.length(), Integer.parseInt(code, 2));
-		}
-		String cod = arriy[PSEUDO_EOF];
-		j.writeBits(cod.length(), Integer.parseInt(cod, 2));
-		
+		out.close();
 	}
 	
 	/**
