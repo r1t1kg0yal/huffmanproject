@@ -89,6 +89,9 @@ public class HuffProcessor {
 		
 		PriorityQueue<HuffNode> pq = new PriorityQueue<>();
 		
+		if(myDebugLevel >= DEBUG_HIGH)
+			System.out.printf("pq created with %d nodes\n", pq.size());
+		
 		for(int k = 0; k < freqs.length; k++) {
 			if (freqs[k] > 0) //only add nodes with non-zero weights to pq
 				pq.add(new HuffNode(k, freqs[k], null, null));
@@ -209,6 +212,10 @@ public class HuffProcessor {
 		out.close();
 	}
 	
+	/**
+	 * Reads tree, which was stored using recursion
+	 * @param in
+	 */
 	private HuffNode readTreeHeader(BitInputStream in) {
 		int bit = in.readBits(1);
         if (bit == -1) {
@@ -225,6 +232,13 @@ public class HuffProcessor {
      	}    
 	}
 	
+	/**
+	 * Read bits from BitInputStream. Traverses tree from root, going left or right depending on whether a 0 or 1 is read.
+	 * @param root is the HuffNode tree object
+	 * @param in
+	 * @param out
+	 * @return HuffNode representing new encoding
+	 */
 	private HuffNode readCompressedBits(HuffNode root, BitInputStream in, BitOutputStream out) {
 		
 		HuffNode current = root; 
