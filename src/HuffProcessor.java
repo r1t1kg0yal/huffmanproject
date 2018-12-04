@@ -44,24 +44,6 @@ public class HuffProcessor {
 	 * @param out
 	 *            Buffered bit stream writing to the output file.
 	 */
-	/**
-	 * Compresses a file. Process must be reversible and loss-less.
-	 *
-	 * @param in
-	 *            Buffered bit stream of the file to be compressed.
-	 * @param out
-	 *            Buffered bit stream writing to the output file.
-	 */
-/*	public void compress(BitInputStream in, BitOutputStream out){
-		while (true){
-			int val = in.readBits(BITS_PER_WORD);
-			if (val == -1) break;
-			out.writeBits(BITS_PER_WORD, val);
-		}
-		out.close();
-	}*/
-	
-	
 	public void compress(BitInputStream in, BitOutputStream out) {
 		
 		int [] counts = readforCounts(in);
@@ -69,19 +51,17 @@ public class HuffProcessor {
 		String[] codings = makeCodingsFromTree(root);
 		
 		out.writeBits(BITS_PER_INT, HUFF_TREE);
-		writeHeader(root, out);
+		writeTreeHeader(root, out);
 		
 		in.reset();
 		writeCompressedBits(codings, in, out);
 		out.close();
-		
 	}
-	
 	
 	/**
 	 * Determines frequencies 
 	 * @param in 
-	 * @return int array of frequencies of 8-bit characters/chunks
+	 * @return int array of frequencies
 	 */
 	private int[] readforCounts(BitInputStream in) {
 		
@@ -110,16 +90,18 @@ public class HuffProcessor {
 		PriorityQueue<HuffNode> pq = new PriorityQueue<>();
 		
 		for(int k = 0; k < freqs.length; k++) {
-			if (freqs[k] > 0) { //only add nodes with non-zero weights to pq
+			if (freqs[k] > 0) //only add nodes with non-zero weights to pq
 				pq.add(new HuffNode(k, freqs[k], null, null));
-			}	
+			
 		}
 		
 		while (pq.size() > 1) {
+			
 			HuffNode left = pq.remove();
 			HuffNode right = pq.remove();
-			HuffNode t = new HuffNode(-1, left.myWeight+right.myWeight, left, right); 
+			HuffNode t = new HuffNode(-1, left.myWeight + right.myWeight, left, right); 
 			pq.add(t);
+			
 		}
 		
 		HuffNode root = pq.remove();
@@ -127,58 +109,63 @@ public class HuffProcessor {
 	}
 	
 	/**
-	 * Uses helper method to return String array of bit-stream encodings for characters
-	 * @param root
+	 * Return String array of bit-stream codes
+	 * @param root is HuffNode tree object
 	 * @return
 	 */
 	private String [] makeCodingsFromTree(HuffNode root) {
 		
-		String[] encodings = new String[ALPH_SIZE +1];
-		codingHelper(root, "", encodings);
+		String[] codes = new String[ALPH_SIZE +1];
+		codingHelper(root, "", codes);
 		
-        return encodings;
+        return codes;
 	}
 	
 	/**
 	 * Reads tree, creates encoding pathway determined by 0s (left) and 1s (right)
-	 * @param root
-	 * @param path
-	 * @param encodings
+	 * @param root is the HuffNode tree object
+	 * @param path is the path created from the tree
+	 * @param codes is a string array of the codes
 	 */
-	private void codingHelper(HuffNode root, String path, String[] encodings) { //populates String array encoding
+	private void codingHelper(HuffNode root, String path, String[] codes) {
 
 		if(root.myLeft == null && root.myRight == null) {
-			encodings[root.myValue] = path;
+			codes[root.myValue] = path;
 			return;
 		}
 		
-        codingHelper(root.myLeft, path + "0", encodings); // "0" is added to path when recursive call made on left subtree
-    	    codingHelper(root.myRight, path + "1", encodings); // "1" is added to path when recursive call made on right subtree
+        codingHelper(root.myLeft, path + "0", codes); // "0" added to path when left
+    	codingHelper(root.myRight, path + "1", codes); // "1" added to path when right
 		
 	}
 	
     /**
      * If node is internal node, writes single bit of zero
      * If node is leaf, writes a single bit of 1 followed by 9 bits of value stored in the leaf
-     * @param root
-     * @param out
+     * @param root is the HuffNode tree object
+     * @param out is the codes written 
      */
-	private void writeHeader(HuffNode root, BitOutputStream out) {
+	private void writeTreeHeader(HuffNode root, BitOutputStream out) {
 		
 		if(root.myLeft == null && root.myRight == null) {
+			
 			out.writeBits(1, 1);
 			out.writeBits(BITS_PER_WORD + 1 , root.myValue);
+			
 		}
+		
 		else {
+			
 			out.writeBits(1, 0);
-			writeHeader(root.myLeft, out);
-			writeHeader(root.myRight, out);
+			writeTreeHeader(root.myLeft, out);
+			writeTreeHeader(root.myRight, out);
+			
 		}
 	}
 	
 	/**
 	 * Reads input and uses codings to encode bit-sequence for characters in input
-	 * @param codings, String array containing encodings for each character
+	 * @param codings, String array containing codes for each character
 	 * @param in
 	 * @param out
 	 */
@@ -186,14 +173,17 @@ public class HuffProcessor {
 		
 		in.reset();
 		int value = in.readBits(BITS_PER_WORD);
+		
 		while(value != -1) {
+			
 			String code = codings[value];
 			out.writeBits(code.length(), Integer.parseInt(code, 2));	
 			value = in.readBits(BITS_PER_WORD);
+			
 		}
 		
-		String codeEOF = codings[PSEUDO_EOF];
-		out.writeBits(codeEOF.length(), Integer.parseInt(codeEOF, 2));
+		String last = codings[PSEUDO_EOF];
+		out.writeBits(last.length(), Integer.parseInt(last, 2));
 				
 	}
 	
