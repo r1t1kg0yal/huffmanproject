@@ -159,5 +159,4 @@ public class HuffProcessor {
 			return new HuffNode(in.readBits(BITS_PER_WORD+1), 0);
 		}
 	}
-	
 }
