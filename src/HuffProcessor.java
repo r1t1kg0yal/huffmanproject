@@ -118,8 +118,9 @@ public class HuffProcessor {
 	 */
 	public void decompress(BitInputStream in, BitOutputStream out) {
 		//check for HUFF_NUMBER
-		if(in.readBits(BITS_PER_INT) != HUFF_NUMBER)
-			throw new HuffException("HUFF_NUMBER is not presented!");
+		int bits = in.readBits(BITS_PER_INT);
+		if(bits != HUFF_TREE)
+			throw new HuffException("illegal header starts with " + bits);
 		//recreate the Hufftree from header
 		HuffNode root = readHeader(in);
 		// parse body of compressed file
